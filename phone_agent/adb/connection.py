@@ -77,10 +77,12 @@ class ADBConnection:
                 [self.adb_path, "connect", address],
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='ignore',
                 timeout=timeout,
             )
 
-            output = result.stdout + result.stderr
+            output = (result.stdout or "") + (result.stderr or "")
 
             if "connected" in output.lower():
                 return True, f"Connected to {address}"
@@ -109,9 +111,9 @@ class ADBConnection:
             if address:
                 cmd.append(address)
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore', timeout=5)
 
-            output = result.stdout + result.stderr
+            output = (result.stdout or "") + (result.stderr or "")
             return True, output.strip() or "Disconnected"
 
         except Exception as e:
@@ -129,11 +131,14 @@ class ADBConnection:
                 [self.adb_path, "devices", "-l"],
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='ignore',
                 timeout=5,
             )
 
             devices = []
-            for line in result.stdout.strip().split("\n")[1:]:  # Skip header
+            output = result.stdout or ""
+            for line in output.strip().split("\n")[1:]:  # Skip header
                 if not line.strip():
                     continue
 
@@ -241,9 +246,9 @@ class ADBConnection:
                 cmd.extend(["-s", device_id])
             cmd.extend(["tcpip", str(port)])
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore', timeout=10)
 
-            output = result.stdout + result.stderr
+            output = (result.stdout or "") + (result.stderr or "")
 
             if "restarting" in output.lower() or result.returncode == 0:
                 time.sleep(TIMING_CONFIG.connection.adb_restart_delay)
@@ -270,10 +275,11 @@ class ADBConnection:
                 cmd.extend(["-s", device_id])
             cmd.extend(["shell", "ip", "route"])
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore', timeout=5)
 
             # Parse IP from route output
-            for line in result.stdout.split("\n"):
+            output = result.stdout or ""
+            for line in output.split("\n"):
                 if "src" in line:
                     parts = line.split()
                     for i, part in enumerate(parts):
@@ -286,10 +292,13 @@ class ADBConnection:
                 cmd[:-1] + ["shell", "ip", "addr", "show", "wlan0"],
                 capture_output=True,
                 text=True,
+                encoding='utf-8',
+                errors='ignore',
                 timeout=5,
             )
 
-            for line in result.stdout.split("\n"):
+            output = result.stdout or ""
+            for line in output.split("\n"):
                 if "inet " in line:
                     parts = line.strip().split()
                     if len(parts) >= 2:
